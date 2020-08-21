@@ -217,6 +217,7 @@ typedef struct media_info_s {
 	uint64_t codec_delay;
 	language_id_t language;
 	vod_str_t label;
+	bool_t with_accessibility;
 	union {
 		video_media_info_t video;
 		audio_media_info_t audio;
