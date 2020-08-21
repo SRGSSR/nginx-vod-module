@@ -188,6 +188,13 @@ ngx_child_request_wev_handler(ngx_http_request_t *r)
 			b->last = b->pos;
 			break;
 
+		case NGX_HTTP_NOT_FOUND:
+		case NGX_HTTP_FORBIDDEN:
+			ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
+						  "ngx_child_request_wev_handler: upstream returned status %ui", u->headers_in.status_n);
+			rc = u->headers_in.status_n;
+			break;
+
 		default:
 			if (u->headers_in.status_n != 0)
 			{
