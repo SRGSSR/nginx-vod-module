@@ -53,8 +53,8 @@ static ngx_uint_t range_hash =
 	ngx_hash(ngx_hash(ngx_hash(ngx_hash('r', 'a'), 'n'), 'g'), 'e');
 
 static ngx_child_request_hide_header_t hide_headers[] = {
-	{ ngx_string("Accept"), 
-#if (NGX_HTTP_HEADERS)	
+	{ ngx_string("Accept"),
+#if (NGX_HTTP_HEADERS)
 		offsetof(ngx_http_headers_in_t, accept)
 #else
 		-1
@@ -62,15 +62,15 @@ static ngx_child_request_hide_header_t hide_headers[] = {
 	},
 	{ ngx_string("Accept-Charset"), -1 },
 	{ ngx_string("Accept-Datetime"), -1 },
-	{ ngx_string("Accept-Encoding"), 
+	{ ngx_string("Accept-Encoding"),
 #if (NGX_HTTP_GZIP)
 		offsetof(ngx_http_headers_in_t, accept_encoding)
 #else
 		-1
 #endif
 	},
-	{ ngx_string("Accept-Language"), 
-#if (NGX_HTTP_HEADERS)	
+	{ ngx_string("Accept-Language"),
+#if (NGX_HTTP_HEADERS)
 		offsetof(ngx_http_headers_in_t, accept_language)
 #else
 		-1
@@ -176,7 +176,7 @@ ngx_child_request_wev_handler(ngx_http_request_t *r)
 			if (u->headers_in.content_length_n > 0 && u->headers_in.content_length_n != b->last - b->pos)
 			{
 				ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
-					"ngx_child_request_wev_handler: upstream connection was closed with %O bytes left to read", 
+					"ngx_child_request_wev_handler: upstream connection was closed with %O bytes left to read",
 					u->headers_in.content_length_n - (b->last - b->pos));
 				rc = NGX_HTTP_BAD_GATEWAY;
 			}
@@ -191,7 +191,8 @@ ngx_child_request_wev_handler(ngx_http_request_t *r)
 		case NGX_HTTP_NOT_FOUND:
 		case NGX_HTTP_FORBIDDEN:
 			ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
-						  "ngx_child_request_wev_handler: upstream [%s] returned status %ui, %s", u->uri, u->headers_in.status_n);
+			"ngx_child_request_wev_handler: upstream: %s, uri: %s, status: %ui",
+				u->schema.data, sr->uri.data, u->headers_in.status_n);
 			rc = u->headers_in.status_n;
 			break;
 
@@ -199,7 +200,8 @@ ngx_child_request_wev_handler(ngx_http_request_t *r)
 			if (u->headers_in.status_n != 0)
 			{
 				ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
-					"ngx_child_request_wev_handler: upstream returned a bad status %ui", u->headers_in.status_n);
+			  	"ngx_child_request_wev_handler: upstream: %s, uri: %s, status: %ui",
+					u->schema.data, sr->uri.data, u->headers_in.status_n);
 			}
 			else
 			{
@@ -259,8 +261,8 @@ ngx_child_request_wev_handler(ngx_http_request_t *r)
 
 static ngx_int_t
 ngx_child_request_finished_handler(
-	ngx_http_request_t *r, 
-	void *data, 
+	ngx_http_request_t *r,
+	void *data,
 	ngx_int_t rc)
 {
 	ngx_http_request_t          *pr;
@@ -376,8 +378,8 @@ ngx_child_request_initial_wev_handler(ngx_http_request_t *r)
 
 static void
 ngx_child_request_update_multi_header(
-	ngx_array_t* arr, 
-	ngx_table_elt_t* cur_value, 
+	ngx_array_t* arr,
+	ngx_table_elt_t* cur_value,
 	ngx_table_elt_t* new_value)
 {
 	ngx_table_elt_t** cur = arr->elts;
@@ -462,7 +464,7 @@ ngx_child_request_copy_headers(
 			continue;
 		}
 
-		
+
 		if (!params->proxy_all_headers)
 		{
 			// remove headers from the hide list
@@ -663,7 +665,7 @@ ngx_child_request_start(
 		sr->method = NGX_HTTP_HEAD;
 		sr->method_name = ngx_http_vod_head_method;
 	}
-	
+
 	// build the request headers
 	rc = ngx_child_request_copy_headers(r, params, &sr->headers_in, &r->headers_in);
 	if (rc != NGX_OK)
@@ -748,8 +750,8 @@ ngx_child_request_init(ngx_conf_t *cf)
 	// initialize hide_headers_hash
 	if (ngx_array_init(
 		&hide_headers_arr,
-		cf->temp_pool, 
-		sizeof(hide_headers) / sizeof(hide_headers[0]), 
+		cf->temp_pool,
+		sizeof(hide_headers) / sizeof(hide_headers[0]),
 		sizeof(ngx_hash_key_t)) != NGX_OK)
 	{
 		return NGX_ERROR;
@@ -758,7 +760,7 @@ ngx_child_request_init(ngx_conf_t *cf)
 	for (h = hide_headers; h->name.len; h++)
 	{
 		hk = ngx_array_push(&hide_headers_arr);
-		if (hk == NULL) 
+		if (hk == NULL)
 		{
 			return NGX_ERROR;
 		}
