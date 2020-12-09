@@ -66,6 +66,7 @@ typedef struct {
 	media_range_t* clip_ranges;
 	uint32_t clip_count;
 	uint32_t clip_relative_segment_index;
+	uint32_t segment_count;
 } get_clip_ranges_result_t;
 
 typedef uint32_t (*segmenter_get_segment_count_t)(segmenter_conf_t* conf, uint64_t duration_millis);

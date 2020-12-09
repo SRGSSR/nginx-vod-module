@@ -672,6 +672,7 @@ segmenter_get_start_end_ranges_no_discontinuity(
 		params->conf,
 		cur_clip_range->original_clip_time - segment_base_time);
 	result->clip_relative_segment_index = params->segment_index - clip_initial_segment_index;
+	result->segment_count = segment_count;
 	
 	return VOD_OK;
 }
@@ -883,6 +884,7 @@ segmenter_get_start_end_ranges_discontinuity(
 	result->clip_count = 1;
 	result->clip_ranges = cur_clip_range;
 	result->clip_relative_segment_index = segment_index - clip_initial_segment_index;
+	result->segment_count = cur_segment_limit;
 
 	return VOD_OK;
 }

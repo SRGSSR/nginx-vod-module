@@ -2582,6 +2582,7 @@ media_set_parse_json(
 			}
 
 			result->initial_segment_clip_relative_index = context.clip_ranges.clip_relative_segment_index;
+			result->segment_count = context.clip_ranges.segment_count;
 		}
 		else
 		{

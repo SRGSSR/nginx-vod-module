@@ -134,6 +134,7 @@ typedef struct {
 
 	uint64_t segment_start_time;
 	uint32_t segment_duration;
+	uint32_t segment_count;  // total segment count
 	int64_t live_window_duration;
 	media_look_ahead_segment_t* look_ahead_segments;
 	uint32_t look_ahead_segment_count;

@@ -524,3 +524,35 @@ ngx_http_vod_set_expires(ngx_http_request_t *r, time_t expires_time)
 
 	return NGX_OK;
 }
+
+void
+ngx_http_vod_read_header(ngx_http_request_t *r,
+						 const ngx_str_t *key,
+						 ngx_str_t *result) {
+
+	ngx_list_t headers = r->headers_in.headers;
+	ngx_list_part_t *part = &headers.part;
+	ngx_table_elt_t *data = part->elts;
+	ngx_table_elt_t header;
+
+	unsigned int i;
+
+	for (i = 0;; i++) {
+
+		if (i >= part->nelts) {
+			if (part->next == NULL) {
+				break;
+			}
+
+			part = part->next;
+			data = part->elts;
+			i = 0;
+		}
+
+		header = data[i];
+		if (ngx_strcasecmp(key->data, header.key.data) == 0) {
+			*result = header.value;
+			break;
+		}
+	}
+}

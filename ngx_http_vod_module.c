@@ -27,6 +27,7 @@
 #include "vod/media_set_parser.h"
 #include "vod/manifest_utils.h"
 #include "vod/input/silence_generator.h"
+#include "ngx_http_vod_origin_assist_prefetch.h"
 
 #if (NGX_HAVE_LIB_AV_CODEC)
 #include "ngx_http_vod_thumb.h"
@@ -1103,10 +1104,63 @@ ngx_http_vod_send_header(
 }
 
 static void
-ngx_http_vod_finalize_request(ngx_http_vod_ctx_t *ctx, ngx_int_t rc)
-{
-	if (ctx->submodule_context.r->header_sent && rc != NGX_OK)
+ngx_http_vod_handle_origin_assist_prefetch(ngx_http_vod_ctx_t *ctx) {
+	ngx_http_request_t *r = ctx->submodule_context.r;
+
+	if (ngx_http_vod_is_origin_assist_prefetch_enabled(r))
 	{
+		ngx_log_debug0(NGX_LOG_DEBUG_HTTP, r->connection->log, 0,
+					   "ngx_http_vod_handle_origin_assist_prefetch: prefetching is enabled");
+
+		if ((ctx->request->request_class & REQUEST_CLASS_SEGMENT) != 0)
+		{
+			ngx_log_debug0(NGX_LOG_DEBUG_HTTP, r->connection->log, 0,
+						   "ngx_http_vod_handle_origin_assist_prefetch: handle segment prefetch");
+
+			uint32_t segment_index = ctx->submodule_context.request_params.segment_index + 1; // segment_index is zero-based
+			uint32_t segment_count = ctx->submodule_context.media_set.segment_count;
+
+			if (segment_index < segment_count) {
+
+				ngx_log_debug1(NGX_LOG_DEBUG_HTTP, r->connection->log, 0,
+							   "ngx_http_vod_handle_origin_assist_prefetch: URI = %s",
+							   ctx->submodule_context.media_set.uri.data);
+
+				ngx_str_t path = ngx_null_string;
+				path.data = ngx_pnalloc(r->pool, VOD_INT32_LEN);
+				path.len = ngx_sprintf(path.data, "%d", segment_index + 1) - path.data;
+
+				if (ngx_http_vod_set_origin_assist_prefetch_path(r, path) != NGX_OK) {
+					ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
+								  "ngx_http_vod_handle_origin_assist_prefetch: could not set header");
+				}
+
+				// ngx_table_elt_t *origin_assist_prefetch;
+//
+				// origin_assist_prefetch = ngx_list_push(&r->headers_out.headers);
+				// if (origin_assist_prefetch == NULL) {
+				// 	return;
+				// }
+//
+				// origin_assist_prefetch->hash = 1;
+				// ngx_str_set(&origin_assist_prefetch->key, "CDN-Origin-Assist-Prefetch-Index");
+//
+				// origin_assist_prefetch->value.data = ngx_pnalloc(r->pool, VOD_INT32_LEN);
+				// if (origin_assist_prefetch->value.data == NULL) {
+				// 	return;
+				// }
+//
+				// origin_assist_prefetch->value.len =
+				// 		ngx_sprintf(origin_assist_prefetch->value.data, "%d", segment_index + 1) -
+				// 		origin_assist_prefetch->value.data;
+			}
+		}
+	}
+}
+
+static void
+ngx_http_vod_finalize_request(ngx_http_vod_ctx_t *ctx, ngx_int_t rc) {
+	if (ctx->submodule_context.r->header_sent && rc != NGX_OK) {
 		rc = NGX_ERROR;
 	}
 
@@ -1588,6 +1642,7 @@ ngx_http_vod_init_parse_params_frames(
 			&clip_ranges);
 
 		ctx->submodule_context.media_set.initial_segment_clip_relative_index = clip_ranges.clip_relative_segment_index;
+		ctx->submodule_context.media_set.segment_count = clip_ranges.segment_count;
 	}
 	else
 	{
@@ -2813,6 +2868,8 @@ ngx_http_vod_handle_metadata_request(ngx_http_vod_ctx_t *ctx)
 		}
 	}
 
+	ngx_http_vod_handle_origin_assist_prefetch(ctx);
+
 	rc = ngx_http_vod_send_header(
 		ctx->submodule_context.r, 
 		response.len, 
@@ -3053,6 +3110,8 @@ ngx_http_vod_init_frame_processing(ngx_http_vod_ctx_t *ctx)
 	// if the frame processor can't determine the size in advance we have to build the whole response before we can start sending it
 	if (ctx->content_length != 0)
 	{
+		ngx_http_vod_handle_origin_assist_prefetch(ctx);
+
 		// send the response header
 		rc = ngx_http_vod_send_header(r, ctx->content_length, NULL, MEDIA_SET_VOD, NULL);
 		if (rc != NGX_OK)
