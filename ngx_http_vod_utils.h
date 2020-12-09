@@ -40,4 +40,10 @@ ngx_int_t ngx_http_vod_set_expires(
 	ngx_http_request_t *r,
 	time_t expires_time);
 
+
+void ngx_http_vod_read_header(
+	ngx_http_request_t *r,
+	const ngx_str_t *key,
+	ngx_str_t *result);
+
 #endif // _NGX_HTTP_VOD_UTILS_H_INCLUDED_

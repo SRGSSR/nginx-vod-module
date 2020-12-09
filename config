@@ -265,6 +265,7 @@ VOD_DEPS="$VOD_DEPS                                           \
           $ngx_addon_dir/ngx_http_vod_mss.h                   \
           $ngx_addon_dir/ngx_http_vod_mss_commands.h          \
           $ngx_addon_dir/ngx_http_vod_mss_conf.h              \
+          $ngx_addon_dir/ngx_http_vod_origin_assist_prefetch.h \
           $ngx_addon_dir/ngx_http_vod_request_parse.h         \
           $ngx_addon_dir/ngx_http_vod_status.h                \
           $ngx_addon_dir/ngx_http_vod_submodule.h             \
@@ -360,6 +361,7 @@ VOD_SRCS="$VOD_SRCS                                           \
           $ngx_addon_dir/ngx_http_vod_hls.c                   \
           $ngx_addon_dir/ngx_http_vod_module.c                \
           $ngx_addon_dir/ngx_http_vod_mss.c                   \
+          $ngx_addon_dir/ngx_http_vod_origin_assist_prefetch.c \
           $ngx_addon_dir/ngx_http_vod_request_parse.c         \
           $ngx_addon_dir/ngx_http_vod_status.c                \
           $ngx_addon_dir/ngx_http_vod_submodule.c             \
