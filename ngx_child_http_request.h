@@ -4,6 +4,10 @@
 // includes
 #include <ngx_http.h>
 
+#ifndef NGX_HTTP_GONE
+#define NGX_HTTP_GONE 410
+#endif
+
 // typedefs
 typedef void(*ngx_child_request_callback_t)(void* context, ngx_int_t rc, ngx_buf_t* buf, ssize_t bytes_read);
 
