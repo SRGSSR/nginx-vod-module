@@ -188,9 +188,10 @@ ngx_child_request_wev_handler(ngx_http_request_t *r)
 			b->last = b->pos;
 			break;
 
+		case NGX_HTTP_BAD_REQUEST:
 		case NGX_HTTP_NOT_FOUND:
-		case NGX_HTTP_GONE:
 		case NGX_HTTP_FORBIDDEN:
+		case NGX_HTTP_GONE:
 			ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
 			"ngx_child_request_wev_handler: upstream: %s, uri: %s, status: %ui",
 				u->schema.data, sr->uri.data, u->headers_in.status_n);
