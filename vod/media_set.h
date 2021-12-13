@@ -15,6 +15,7 @@
 
 #define MAX_LOOK_AHEAD_SEGMENTS (2)
 #define MAX_NOTIFICATIONS (1024)
+#define MAX_CLOSED_CAPTIONS (67)
 #define MAX_CLIPS (128)
 #define MAX_CLIPS_PER_REQUEST (16)
 #define MAX_SEQUENCES (32)
@@ -59,6 +60,7 @@ struct media_sequence_s {
 	vod_str_t stripped_uri;
 	vod_str_t id;
 	vod_str_t label;
+	vod_str_t lang_str;
 	language_id_t language;
 	uint32_t bitrate[MEDIA_TYPE_COUNT];
 	uint32_t avg_bitrate[MEDIA_TYPE_COUNT];
@@ -104,6 +106,12 @@ typedef struct media_notification_s {
 } media_notification_t;
 
 typedef struct {
+	vod_str_t id;
+	vod_str_t language;
+	vod_str_t label;
+} media_closed_captions_t;
+
+typedef struct {
 	uint64_t start_time;
 	uint32_t duration;
 } media_look_ahead_segment_t;
@@ -116,10 +124,12 @@ typedef struct {
 	vod_str_t id;
 	uint32_t type;
 	uint32_t original_type;					// will contain live in case of a live playlist that was forced to vod
+	bool_t is_live_event;					// causes HLS playlist type to be event and infinite live_window_duration
 	media_clip_timing_t timing;
 	bool_t original_use_discontinuity;		// will be different than use_discontinuity in case force_continuous_timestamps is enabled
 	bool_t use_discontinuity;
 	bool_t presentation_end;
+	bool_t cache_mapping;
 
 	uint32_t clip_count;					// number of clips relevant to serve the current request
 	uint32_t sequence_count;
@@ -145,6 +155,9 @@ typedef struct {
 
 	media_notification_t* notifications_head;
 
+	media_closed_captions_t* closed_captions;
+	media_closed_captions_t* closed_captions_end;
+
 	// initialized while applying filters
 	uint32_t track_count[MEDIA_TYPE_COUNT];	// sum of track count in all sequences per clip
 	uint32_t total_track_count;
@@ -155,7 +168,7 @@ typedef struct {
 
 typedef struct {
 	int32_t index;			// positive = sequence index (-f1), negative = index into sequence_ids (-s1)
-	uint32_t tracks_mask[MEDIA_TYPE_COUNT];
+	track_mask_t tracks_mask[MEDIA_TYPE_COUNT];
 } sequence_tracks_mask_t;
 
 typedef struct {
@@ -166,10 +179,10 @@ typedef struct {
 	uint32_t pts_delay;
 	uint32_t sequences_mask;
 	vod_str_t sequence_ids[MAX_SEQUENCE_IDS];
-	uint32_t tracks_mask[MEDIA_TYPE_COUNT];
+	track_mask_t tracks_mask[MEDIA_TYPE_COUNT];
 	sequence_tracks_mask_t* sequence_tracks_mask;
 	sequence_tracks_mask_t* sequence_tracks_mask_end;
-	uint8_t* langs_mask;			// [LANG_MASK_SIZE]
+	uint64_t* langs_mask;			// [LANG_MASK_SIZE]
 	uint32_t version;
 	uint32_t width;
 	uint32_t height;

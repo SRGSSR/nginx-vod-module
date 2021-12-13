@@ -1,7 +1,7 @@
 #!/bin/sh
 set -o nounset                              # Treat unset variables as an error
 
-NGINX_VERSION=1.17.10
+NGINX_VERSION=1.21.2
 NGINX_URI="http://nginx.org/download/nginx-$NGINX_VERSION.tar.gz"
 
 
@@ -14,9 +14,10 @@ cp -r . /tmp/builddir/nginx-$NGINX_VERSION/nginx-vod-module
 cd /tmp/builddir
 wget $NGINX_URI -O kaltura-nginx-$NGINX_VERSION.tar.gz
 tar zxf kaltura-nginx-$NGINX_VERSION.tar.gz
-cd nginx-$NGINX_VERSION
+mv nginx-$NGINX_VERSION nginx
+cd nginx
 
-FFMPEG_VERSION=3.2
+FFMPEG_VERSION=4.2.2
 LD_LIBRARY_PATH=/opt/kaltura/ffmpeg-$FFMPEG_VERSION/lib
 LIBRARY_PATH=/opt/kaltura/ffmpeg-$FFMPEG_VERSION/lib
 C_INCLUDE_PATH=/opt/kaltura/ffmpeg-$FFMPEG_VERSION/include
@@ -54,6 +55,6 @@ export LD_LIBRARY_PATH LIBRARY_PATH C_INCLUDE_PATH
         --with-ipv6 \
         --with-debug \
         --with-threads \
-        --with-cc-opt="-O3" \
+        --with-cc-opt="-O3 -mpopcnt" \
         $*
-make
+make -j $(nproc)
