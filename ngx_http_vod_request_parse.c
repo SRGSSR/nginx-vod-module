@@ -1081,6 +1081,7 @@ ngx_http_vod_parse_uri_path(
 		cur_sequence->lang_str.len = 0;
 		cur_sequence->language = 0;
 		cur_sequence->label.len = 0;
+		cur_sequence->with_accessibility = FALSE;
 		cur_sequence->first_key_frame_offset = 0;
 		cur_sequence->key_frame_durations = NULL;
 		cur_sequence->drm_info = NULL;

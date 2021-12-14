@@ -5264,6 +5264,7 @@ ngx_http_vod_map_media_set_apply(ngx_http_vod_ctx_t *ctx, ngx_str_t* mapping, in
 			sequence->lang_str = mapped_media_set.sequences->lang_str;
 			sequence->language = mapped_media_set.sequences->language;
 			sequence->label = mapped_media_set.sequences->label;
+			sequence->with_accessibility = mapped_media_set.sequences->with_accessibility;
 			sequence->id = mapped_media_set.sequences->id;
 			ngx_memcpy(sequence->bitrate, mapped_media_set.sequences->bitrate, sizeof(sequence->bitrate));
 			ngx_memcpy(sequence->avg_bitrate, mapped_media_set.sequences->avg_bitrate, sizeof(sequence->avg_bitrate));

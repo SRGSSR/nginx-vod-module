@@ -71,6 +71,7 @@ subtitle_parse(
 	language_id_t lang_id;
 	vod_str_t lang_str;
 	vod_str_t label;
+	bool_t with_accessibility;
 	uint64_t duration;
 
 	metadata = vod_alloc(request_context->pool, sizeof(*metadata));
@@ -91,6 +92,7 @@ subtitle_parse(
 
 	// inherit the sequence language and label
 	sequence = parse_params->source->sequence;
+	with_accessibility = sequence->with_accessibility;
 	if (sequence->label.len != 0)
 	{
 		lang_str = sequence->lang_str;
@@ -146,6 +148,7 @@ subtitle_parse(
 	track->media_info.lang_str = lang_str;
 	track->media_info.language = lang_id;
 	track->media_info.label = label;
+	track->media_info.with_accessibility = with_accessibility;
 	track->media_info.bitrate = (source->len * 1000 * 8) / full_duration;
 
 	metadata->source = *source;

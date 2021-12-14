@@ -99,6 +99,7 @@ typedef vod_status_t(*parser_init_t)(vod_pool_t* pool, vod_pool_t* temp_pool);
 // forward decls
 static vod_status_t media_set_parse_tracks_spec(void* ctx, vod_json_value_t* value, void* dest);
 static vod_status_t media_set_parse_int64(void* ctx, vod_json_value_t* value, void* dest);
+static vod_status_t media_set_parse_bool(void* ctx, vod_json_value_t* value, void* dest);
 static vod_status_t media_set_parse_base64_string(void* ctx, vod_json_value_t* value, void* dest);
 static vod_status_t media_set_parse_encryption_scheme(void* ctx, vod_json_value_t* value, void* dest);
 static vod_status_t media_set_parse_source(void* ctx, vod_json_object_t* element, void** result);
@@ -134,6 +135,7 @@ static json_object_value_def_t media_sequence_params[] = {
 	{ vod_string("clips"),			VOD_JSON_ARRAY,		offsetof(media_sequence_t, unparsed_clips), media_set_parse_clips_array },
 	{ vod_string("language"),		VOD_JSON_STRING,	offsetof(media_sequence_t, lang_str), media_set_parse_null_term_string },
 	{ vod_string("label"),			VOD_JSON_STRING,	offsetof(media_sequence_t, label), media_set_parse_null_term_string },
+	{ vod_string("withAccessibility"),VOD_JSON_BOOL,	offsetof(media_sequence_t, with_accessibility), media_set_parse_bool },
 	{ vod_string("bitrate"),		VOD_JSON_OBJECT,	offsetof(media_sequence_t, bitrate), media_set_parse_bitrate },
 	{ vod_string("avg_bitrate"),	VOD_JSON_OBJECT,	offsetof(media_sequence_t, avg_bitrate), media_set_parse_bitrate },
 	{ vod_null_string, 0, 0, NULL }
@@ -317,6 +319,16 @@ media_set_parse_int64(
 	void* dest)
 {
 	*(uint64_t*)dest = value->v.num.num;
+	return VOD_OK;
+}
+
+static vod_status_t
+media_set_parse_bool(
+		void* ctx,
+		vod_json_value_t* value,
+		void* dest)
+{
+	*(bool_t*)dest = value->v.boolean;
 	return VOD_OK;
 }
 
@@ -954,6 +966,7 @@ media_set_parse_sequences(
 		cur_output->lang_str.len = 0;
 		cur_output->language = 0;
 		cur_output->label.len = 0;
+		cur_output->with_accessibility = FALSE;
 		cur_output->first_key_frame_offset = 0;
 		cur_output->key_frame_durations = NULL;
 		cur_output->drm_info = NULL;
