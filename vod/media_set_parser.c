@@ -25,6 +25,7 @@ enum {
 	MEDIA_SET_PARAM_CONSISTENT_SEQUENCE_MEDIA_INFO,
 	MEDIA_SET_PARAM_DURATIONS,
 	MEDIA_SET_PARAM_SEQUENCES,
+	MEDIA_SET_PARAM_TIME_OFFSET,
 	MEDIA_SET_PARAM_INITIAL_SEGMENT_INDEX,
 	MEDIA_SET_PARAM_INITIAL_CLIP_INDEX,
 	MEDIA_SET_PARAM_FIRST_CLIP_TIME,
@@ -39,6 +40,8 @@ enum {
 	MEDIA_SET_PARAM_NOTIFICATIONS,
 	MEDIA_SET_PARAM_CLIP_FROM,
 	MEDIA_SET_PARAM_CLIP_TO,
+	MEDIA_SET_PARAM_CACHE,
+	MEDIA_SET_PARAM_CLOSED_CAPTIONS,
 
 	MEDIA_SET_PARAM_COUNT
 };
@@ -55,6 +58,14 @@ enum {
 	MEDIA_NOTIFICATION_PARAM_OFFSET,
 
 	MEDIA_NOTIFICATION_PARAM_COUNT
+};
+
+enum {
+	MEDIA_CLOSED_CAPTIONS_PARAM_ID,
+	MEDIA_CLOSED_CAPTIONS_PARAM_LANGUAGE,
+	MEDIA_CLOSED_CAPTIONS_PARAM_LABEL,
+
+	MEDIA_CLOSED_CAPTIONS_PARAM_COUNT
 };
 
 typedef struct {
@@ -92,9 +103,9 @@ static vod_status_t media_set_parse_bool(void* ctx, vod_json_value_t* value, voi
 static vod_status_t media_set_parse_base64_string(void* ctx, vod_json_value_t* value, void* dest);
 static vod_status_t media_set_parse_encryption_scheme(void* ctx, vod_json_value_t* value, void* dest);
 static vod_status_t media_set_parse_source(void* ctx, vod_json_object_t* element, void** result);
-static vod_status_t media_set_parse_language(void* ctx, vod_json_value_t* value, void* dest);
 static vod_status_t media_set_parse_clips_array(void* ctx, vod_json_value_t* value, void* dest);
 static vod_status_t media_set_parse_bitrate(void* ctx, vod_json_value_t* value, void* dest);
+static vod_status_t media_set_parse_source_type(void* ctx, vod_json_value_t* value, void* dest);
 
 // constants
 static json_parser_union_type_def_t media_clip_union_params[] = {
@@ -115,13 +126,14 @@ static json_object_value_def_t media_clip_source_params[] = {
 	{ vod_string("encryptionScheme"), VOD_JSON_STRING,	offsetof(media_clip_source_t, encryption.scheme), media_set_parse_encryption_scheme },
 	{ vod_string("encryptionKey"),	VOD_JSON_STRING,	offsetof(media_clip_source_t, encryption.key), media_set_parse_base64_string },
 	{ vod_string("encryptionIv"),	VOD_JSON_STRING,	offsetof(media_clip_source_t, encryption.iv), media_set_parse_base64_string },
+	{ vod_string("sourceType"),		VOD_JSON_STRING,	offsetof(media_clip_source_t, source_type), media_set_parse_source_type },
 	{ vod_null_string, 0, 0, NULL }
 };
 
 static json_object_value_def_t media_sequence_params[] = {
 	{ vod_string("id"),				VOD_JSON_STRING,	offsetof(media_sequence_t, id), media_set_parse_null_term_string },
 	{ vod_string("clips"),			VOD_JSON_ARRAY,		offsetof(media_sequence_t, unparsed_clips), media_set_parse_clips_array },
-	{ vod_string("language"),		VOD_JSON_STRING,	offsetof(media_sequence_t, language), media_set_parse_language },
+	{ vod_string("language"),		VOD_JSON_STRING,	offsetof(media_sequence_t, lang_str), media_set_parse_null_term_string },
 	{ vod_string("label"),			VOD_JSON_STRING,	offsetof(media_sequence_t, label), media_set_parse_null_term_string },
 	{ vod_string("withAccessibility"),VOD_JSON_BOOL,	offsetof(media_sequence_t, with_accessibility), media_set_parse_bool },
 	{ vod_string("bitrate"),		VOD_JSON_OBJECT,	offsetof(media_sequence_t, bitrate), media_set_parse_bitrate },
@@ -133,6 +145,13 @@ static json_object_key_def_t media_notification_params[] = {
 	{ vod_string("id"),								VOD_JSON_STRING,MEDIA_NOTIFICATION_PARAM_ID },
 	{ vod_string("offset"),							VOD_JSON_INT,	MEDIA_NOTIFICATION_PARAM_OFFSET },
 	{ vod_null_string, 0, 0 }
+};
+
+static json_object_key_def_t media_closed_captions_params[] = {
+	{ vod_string("id"),								VOD_JSON_STRING, MEDIA_CLOSED_CAPTIONS_PARAM_ID },
+	{ vod_string("language"),						VOD_JSON_STRING, MEDIA_CLOSED_CAPTIONS_PARAM_LANGUAGE },
+	{ vod_string("label"),							VOD_JSON_STRING, MEDIA_CLOSED_CAPTIONS_PARAM_LABEL },
+	{ vod_null_string, 0, 0 } 
 };
 
 static json_object_key_def_t media_clip_params[] = {
@@ -148,6 +167,7 @@ static json_object_key_def_t media_set_params[] = {
 	{ vod_string("consistentSequenceMediaInfo"),	VOD_JSON_BOOL,	MEDIA_SET_PARAM_CONSISTENT_SEQUENCE_MEDIA_INFO },
 	{ vod_string("durations"),						VOD_JSON_ARRAY, MEDIA_SET_PARAM_DURATIONS },
 	{ vod_string("sequences"),						VOD_JSON_ARRAY,	MEDIA_SET_PARAM_SEQUENCES },
+	{ vod_string("timeOffset"),						VOD_JSON_INT,	MEDIA_SET_PARAM_TIME_OFFSET },
 	{ vod_string("initialSegmentIndex"),			VOD_JSON_INT,	MEDIA_SET_PARAM_INITIAL_SEGMENT_INDEX },
 	{ vod_string("initialClipIndex"),				VOD_JSON_INT,	MEDIA_SET_PARAM_INITIAL_CLIP_INDEX },
 	{ vod_string("firstClipTime"),					VOD_JSON_INT,	MEDIA_SET_PARAM_FIRST_CLIP_TIME },
@@ -162,14 +182,16 @@ static json_object_key_def_t media_set_params[] = {
 	{ vod_string("notifications"),					VOD_JSON_ARRAY,	MEDIA_SET_PARAM_NOTIFICATIONS },
 	{ vod_string("clipFrom"),						VOD_JSON_INT,	MEDIA_SET_PARAM_CLIP_FROM },
 	{ vod_string("clipTo"),							VOD_JSON_INT,	MEDIA_SET_PARAM_CLIP_TO },
+	{ vod_string("cache"),							VOD_JSON_BOOL,	MEDIA_SET_PARAM_CACHE },
+	{ vod_string("closedCaptions"), 				VOD_JSON_ARRAY, MEDIA_SET_PARAM_CLOSED_CAPTIONS },
 	{ vod_null_string, 0, 0 }
 };
 
 // Note: must match media_clip_source_enc_scheme_t in order
 static vod_str_t encryption_schemes[] = {
-    ngx_string("cenc"),
-    ngx_string("aes-cbc"),
-    ngx_null_string
+	vod_string("cenc"),
+	vod_string("aes-cbc"),
+	vod_null_string
 };
 
 static vod_str_t type_key = vod_string("type");
@@ -177,6 +199,7 @@ static vod_uint_t type_key_hash = vod_hash(vod_hash(vod_hash('t', 'y'), 'p'), 'e
 
 static vod_str_t playlist_type_vod = vod_string("vod");
 static vod_str_t playlist_type_live = vod_string("live");
+static vod_str_t playlist_type_event = vod_string("event");
 
 static parser_init_t parser_init_funcs[] = {
 	gain_filter_parser_init,
@@ -192,6 +215,7 @@ static vod_hash_t media_clip_source_hash;
 static vod_hash_t media_clip_union_hash;
 static vod_hash_t media_sequence_hash;
 static vod_hash_t media_notification_hash;
+static vod_hash_t media_closed_captions_hash;
 static vod_hash_t media_set_hash;
 static vod_hash_t media_clip_hash;
 
@@ -202,6 +226,7 @@ static hash_definition_t hash_definitions[] = {
 	HASH_TABLE(media_clip_union),
 	HASH_TABLE(media_notification),
 	HASH_TABLE(media_clip),
+	HASH_TABLE(media_closed_captions),
 	{ NULL, NULL, 0, NULL }
 };
 
@@ -308,6 +333,34 @@ media_set_parse_bool(
 }
 
 static vod_status_t
+media_set_parse_source_type(
+	void* ctx,
+	vod_json_value_t* value,
+	void* dest)
+{
+	media_filter_parse_context_t* context = ctx;
+
+	if (value->v.str.len == sizeof("file") - 1 &&
+		vod_strncasecmp(value->v.str.data, (u_char*)"file", sizeof("file") - 1) == 0)
+	{
+		*(media_clip_source_type_t*)dest = MEDIA_CLIP_SOURCE_FILE;
+	}
+	else if (value->v.str.len == sizeof("http") - 1 &&
+		vod_strncasecmp(value->v.str.data, (u_char*)"http", sizeof("http") - 1) == 0)
+	{
+		*(media_clip_source_type_t*)dest = MEDIA_CLIP_SOURCE_HTTP;
+	}
+	else
+	{
+		vod_log_error(VOD_LOG_ERR, context->request_context->log, 0,
+			"media_set_parse_source_type: invalid sourceType %V", &value->v.str);
+		return VOD_BAD_MAPPING;
+	}
+
+	return VOD_OK;
+}
+
+static vod_status_t
 media_set_parse_encryption_scheme(
 	void* ctx,
 	vod_json_value_t* value,
@@ -322,7 +375,7 @@ media_set_parse_encryption_scheme(
 		if (value->v.str.len == cur->len && vod_strncasecmp(value->v.str.data, cur->data, cur->len) == 0)
 		{
 			*result = cur - encryption_schemes;
-			return NGX_OK;
+			return VOD_OK;
 		}
 	}
 
@@ -385,35 +438,6 @@ media_set_parse_null_term_string(
 	return VOD_OK;
 }
 
-static vod_status_t 
-media_set_parse_language(
-	void* ctx,
-	vod_json_value_t* value,
-	void* dest)
-{
-	request_context_t* request_context = *(request_context_t**)ctx;
-	language_id_t result;
-
-	if (value->v.str.len < LANG_ISO639_3_LEN)
-	{
-		vod_log_error(VOD_LOG_ERR, request_context->log, 0,
-			"media_set_parse_language: invalid language string length \"%V\"", &value->v.str);
-		return VOD_BAD_MAPPING;
-	}
-
-	result = lang_parse_iso639_3_code(iso639_3_str_to_int(value->v.str.data));
-	if (result == 0)
-	{
-		vod_log_error(VOD_LOG_ERR, request_context->log, 0,
-			"media_set_parse_language: invalid language string \"%V\"", &value->v.str);
-		return VOD_BAD_MAPPING;
-	}
-
-	*(language_id_t*)dest = result;
-
-	return VOD_OK;
-}
-
 static vod_status_t
 media_set_parse_tracks_spec(
 	void* ctx,
@@ -421,7 +445,7 @@ media_set_parse_tracks_spec(
 	void* dest)
 {
 	media_filter_parse_context_t* context = ctx;
-	uint32_t* tracks_mask = dest;
+	track_mask_t* tracks_mask = dest;
 	u_char* end_pos = value->v.str.data + value->v.str.len;
 
 	vod_memzero(tracks_mask, sizeof(tracks_mask[0]) * MEDIA_TYPE_COUNT);
@@ -636,10 +660,10 @@ media_set_parse_source(
 	context->base.sources_head = source;
 
 	vod_log_debug4(VOD_LOG_DEBUG_LEVEL, context->base.request_context->log, 0,
-		"media_set_parse_source: parsed clip source - path=%V tracks[v]=0x%uxD tracks[a]=0x%uxD, clipFrom=%uL", 
+		"media_set_parse_source: parsed clip source - path=%V tracks[v]=0x%uxL tracks[a]=0x%uxL, clipFrom=%uL",
 		&source->mapped_uri, 
-		source->tracks_mask[MEDIA_TYPE_VIDEO],
-		source->tracks_mask[MEDIA_TYPE_AUDIO],
+		source->tracks_mask[MEDIA_TYPE_VIDEO][0],
+		source->tracks_mask[MEDIA_TYPE_AUDIO][0],
 		source->clip_from);
 
 	*result = &source->base;
@@ -762,6 +786,107 @@ media_set_sequence_id_exists(request_params_t* request_params, vod_str_t* id)
 }
 
 static vod_status_t
+media_set_parse_closed_captions(
+	request_context_t* request_context,
+	media_set_t* media_set,
+	vod_json_array_t* array)
+{
+	media_closed_captions_t* cur_output;
+	vod_json_value_t* params[MEDIA_CLOSED_CAPTIONS_PARAM_COUNT];
+	vod_array_part_t* part;
+	vod_json_object_t* cur_pos;
+	vod_status_t rc;
+
+	if (array->type != VOD_JSON_OBJECT && array->count > 0)
+	{
+		vod_log_error(VOD_LOG_ERR, request_context->log, 0,
+			"media_set_parse_closed_captions: invalid closed caption type %d expected object", array->type);
+		return VOD_BAD_MAPPING;
+	}
+
+	if (array->count > MAX_CLOSED_CAPTIONS)
+	{
+		vod_log_error(VOD_LOG_ERR, request_context->log, 0,
+			"media_set_parse_closed_captions: invalid number of elements in the closed captions array %uz", array->count);
+		return VOD_BAD_MAPPING;
+	}
+
+	cur_output = vod_alloc(request_context->pool, sizeof(cur_output[0]) * array->count);
+	if (cur_output == NULL)
+	{
+		vod_log_debug0(VOD_LOG_DEBUG_LEVEL, request_context->log, 0,
+			"media_set_parse_closed_captions: vod_alloc failed");
+		return VOD_ALLOC_FAILED;
+	}
+
+	media_set->closed_captions = cur_output;
+
+	part = &array->part;
+	for (cur_pos = part->first; ; cur_pos++)
+	{
+		if ((void*)cur_pos >= part->last)
+		{
+			if (part->next == NULL)
+			{
+				break;
+			}
+
+			part = part->next;
+			cur_pos = part->first;
+		}
+
+		vod_memzero(params, sizeof(params));
+
+		vod_json_get_object_values(cur_pos, &media_closed_captions_hash, params);
+
+		if (params[MEDIA_CLOSED_CAPTIONS_PARAM_ID] == NULL)
+		{
+			vod_log_error(VOD_LOG_ERR, request_context->log, 0,
+				"media_set_parse_closed_captions: missing id in closed captions object");
+			return VOD_BAD_MAPPING;
+		}
+
+		if (params[MEDIA_CLOSED_CAPTIONS_PARAM_LABEL] == NULL)
+		{
+			vod_log_error(VOD_LOG_ERR, request_context->log, 0,
+				"media_set_parse_closed_captions: missing label in closed captions object");
+			return VOD_BAD_MAPPING;
+		}
+
+		rc = media_set_parse_null_term_string(&request_context, params[MEDIA_CLOSED_CAPTIONS_PARAM_ID], &cur_output->id);
+		if (rc != VOD_OK)
+		{
+			return rc;
+		}
+
+		rc = media_set_parse_null_term_string(&request_context, params[MEDIA_CLOSED_CAPTIONS_PARAM_LABEL], &cur_output->label);
+		if (rc != VOD_OK)
+		{
+			return rc;
+		}
+		
+		if (params[MEDIA_CLOSED_CAPTIONS_PARAM_LANGUAGE] != NULL)
+		{
+			rc = media_set_parse_null_term_string(&request_context, params[MEDIA_CLOSED_CAPTIONS_PARAM_LANGUAGE], &cur_output->language);
+			if (rc != VOD_OK)
+			{
+				return rc;
+			}
+		}
+		else
+		{
+			cur_output->language.len = 0;
+		}
+
+		cur_output++;
+	}
+
+	media_set->closed_captions_end = cur_output;
+
+	return VOD_OK;
+}
+
+static vod_status_t
 media_set_parse_sequences(
 	request_context_t* request_context,
 	media_set_t* media_set,
@@ -792,7 +917,7 @@ media_set_parse_sequences(
 
 	if (request_params->sequence_ids[0].len == 0)
 	{
-		required_sequences_num = vod_get_number_of_set_bits(request_params->sequences_mask);
+		required_sequences_num = vod_get_number_of_set_bits32(request_params->sequences_mask);
 		required_sequences_num = vod_min(array->count, required_sequences_num);
 	}
 	else
@@ -838,6 +963,7 @@ media_set_parse_sequences(
 
 		cur_output->id.len = 0;
 		cur_output->unparsed_clips = NULL;
+		cur_output->lang_str.len = 0;
 		cur_output->language = 0;
 		cur_output->label.len = 0;
 		cur_output->with_accessibility = FALSE;
@@ -870,9 +996,29 @@ media_set_parse_sequences(
 			continue;
 		}
 
-		if (cur_output->language != 0 && cur_output->label.len == 0)
+		if (cur_output->lang_str.len != 0)
 		{
-			lang_get_native_name(cur_output->language, &cur_output->label);
+			if (cur_output->lang_str.len >= LANG_ISO639_3_LEN)
+			{
+				cur_output->language = lang_parse_iso639_3_code(iso639_3_str_to_int(cur_output->lang_str.data));
+				if (cur_output->language != 0)
+				{
+					cur_output->lang_str.data = (u_char *)lang_get_rfc_5646_name(cur_output->language);
+					cur_output->lang_str.len = ngx_strlen(cur_output->lang_str.data);
+				}
+			}
+
+			if (cur_output->label.len == 0)
+			{
+				if (cur_output->language != 0)
+				{
+					lang_get_native_name(cur_output->language, &cur_output->label);
+				}
+				else
+				{
+					cur_output->label = cur_output->lang_str;
+				}
+			}
 		}
 
 		cur_output->index = index;
@@ -1257,6 +1403,11 @@ media_set_parse_live_params(
 	media_set_t* media_set)
 {
 	vod_status_t rc;
+
+	if (params[MEDIA_SET_PARAM_TIME_OFFSET] != NULL)
+	{
+		request_context->time_offset = params[MEDIA_SET_PARAM_TIME_OFFSET]->v.num.num;
+	}
 
 	// clip times
 	rc = media_set_live_init_clip_times(request_context, media_set, params);
@@ -2272,6 +2423,27 @@ media_set_parse_json(
 		return VOD_BAD_REQUEST;
 	}
 
+	if (params[MEDIA_SET_PARAM_CACHE] != NULL)
+	{
+		result->cache_mapping = params[MEDIA_SET_PARAM_CACHE]->v.boolean;
+	}
+	else
+	{
+		result->cache_mapping = TRUE;
+	}
+
+	if (params[MEDIA_SET_PARAM_CLOSED_CAPTIONS] != NULL)
+	{
+		rc = media_set_parse_closed_captions(
+			request_context,
+			result,
+			&params[MEDIA_SET_PARAM_CLOSED_CAPTIONS]->v.arr);
+		if (rc != VOD_OK)
+		{
+			return rc;
+		}
+	}
+
 	if (params[MEDIA_SET_PARAM_DURATIONS] == NULL)
 	{
 		// no durations in the json -> simple vod stream
@@ -2327,9 +2499,21 @@ media_set_parse_json(
 	{
 		result->presentation_end = TRUE;
 	}
-	else if (params[MEDIA_SET_PARAM_PLAYLIST_TYPE]->v.str.len == playlist_type_live.len &&
-		vod_strncasecmp(params[MEDIA_SET_PARAM_PLAYLIST_TYPE]->v.str.data, playlist_type_live.data, playlist_type_live.len) == 0)
+	else
 	{
+		if (params[MEDIA_SET_PARAM_PLAYLIST_TYPE]->v.str.len == playlist_type_event.len &&
+			vod_strncasecmp(params[MEDIA_SET_PARAM_PLAYLIST_TYPE]->v.str.data, playlist_type_event.data, playlist_type_event.len) == 0)
+		{
+			result->is_live_event = TRUE;
+		}
+		else if (params[MEDIA_SET_PARAM_PLAYLIST_TYPE]->v.str.len != playlist_type_live.len ||
+			vod_strncasecmp(params[MEDIA_SET_PARAM_PLAYLIST_TYPE]->v.str.data, playlist_type_live.data, playlist_type_live.len) != 0)
+		{
+			vod_log_error(VOD_LOG_ERR, request_context->log, 0,
+				"media_set_parse_json: invalid playlist type \"%V\", must be either live, vod or event", 
+				&params[MEDIA_SET_PARAM_PLAYLIST_TYPE]->v.str);
+			return VOD_BAD_MAPPING;
+		}
 		result->original_type = MEDIA_SET_LIVE;
 		if ((request_flags & REQUEST_FLAG_FORCE_PLAYLIST_TYPE_VOD) != 0)
 		{
@@ -2339,13 +2523,6 @@ media_set_parse_json(
 		{
 			result->type = MEDIA_SET_LIVE;
 		}
-	}
-	else
-	{
-		vod_log_error(VOD_LOG_ERR, request_context->log, 0,
-			"media_set_parse_json: invalid playlist type \"%V\", must be either live or vod", 
-			&params[MEDIA_SET_PARAM_PLAYLIST_TYPE]->v.str);
-		return VOD_BAD_MAPPING;
 	}
 
 	// discontinuity
@@ -2709,14 +2886,18 @@ media_set_parse_json(
 
 			if (result->type == MEDIA_SET_LIVE)
 			{
-				// trim the playlist to a smaller window if needed
-				result->live_window_duration = segmenter->live_window_duration;
-
-				if (params[MEDIA_SET_PARAM_LIVE_WINDOW_DURATION] != NULL)
+				// trim the playlist to a smaller window if needed.
+				// applying live window with infinite duration is necessary for playlistType event
+				// because we aren't allowed to remove segments from the head for this playlist type.
+				if (!result->is_live_event) 
 				{
-					result->live_window_duration = media_set_apply_live_window_duration_param(
-						result->live_window_duration,
-						params[MEDIA_SET_PARAM_LIVE_WINDOW_DURATION]->v.num.num);
+					result->live_window_duration = segmenter->live_window_duration;
+					if (params[MEDIA_SET_PARAM_LIVE_WINDOW_DURATION] != NULL)
+					{
+						result->live_window_duration = media_set_apply_live_window_duration_param(
+							result->live_window_duration,
+							params[MEDIA_SET_PARAM_LIVE_WINDOW_DURATION]->v.num.num);
+					}
 				}
 
 				if ((request_flags & REQUEST_FLAG_LOOK_AHEAD_SEGMENTS) != 0)
