@@ -105,6 +105,7 @@ silence_generator_generate(
 	track->media_info.label = sequence->label;
 	track->media_info.language = sequence->language;
 	track->media_info.with_accessibility = sequence->with_accessibility;
+	track->media_info.forced = sequence->forced;
 
 	rc = media_format_finalize_track(
 		request_context,

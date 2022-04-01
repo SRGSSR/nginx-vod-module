@@ -218,6 +218,7 @@ typedef struct media_info_s {
 	language_id_t language;
 	vod_str_t label;
 	bool_t with_accessibility;
+	bool_t forced;
 	union {
 		video_media_info_t video;
 		audio_media_info_t audio;
