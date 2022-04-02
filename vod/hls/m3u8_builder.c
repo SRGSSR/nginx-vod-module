@@ -17,7 +17,6 @@
 #define M3U8_EXT_MEDIA_AUTOSELECT "AUTOSELECT=YES,DEFAULT=NO,"
 #define M3U8_EXT_MEDIA_NON_DEFAULT "AUTOSELECT=NO,DEFAULT=NO,"
 #define M3U8_EXT_MEDIA_FORCED "FORCED=YES,"
-#define M3U8_EXT_MEDIA_NON_FORCED "FORCED=NO,"
 #define M3U8_EXT_MEDIA_AD "CHARACTERISTICS=\"public.accessibility.describes-video\","
 #define M3U8_EXT_MEDIA_SDH "CHARACTERISTICS=\"public.accessibility.describes-music-and-sound\","
 #define M3U8_EXT_MEDIA_URI "URI=\""
@@ -869,10 +868,6 @@ m3u8_builder_ext_x_media_tags_get_size(
 			{
 				result += sizeof(M3U8_EXT_MEDIA_FORCED) - 1;
 			}
-			else
-			{
-				result += sizeof(M3U8_EXT_MEDIA_NON_FORCED) - 1;
-			}
 		}
 
 		if (base_url->len != 0)
@@ -991,10 +986,6 @@ m3u8_builder_ext_x_media_tags_write(
 			if (tracks[media_type]->media_info.forced)
 			{
 				p = vod_copy(p, M3U8_EXT_MEDIA_FORCED, sizeof(M3U8_EXT_MEDIA_FORCED) - 1);
-			}
-			else
-			{
-				p = vod_copy(p, M3U8_EXT_MEDIA_NON_FORCED, sizeof(M3U8_EXT_MEDIA_NON_FORCED) - 1);
 			}
 		}
 
