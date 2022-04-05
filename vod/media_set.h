@@ -62,6 +62,7 @@ struct media_sequence_s {
 	vod_str_t label;
 	language_id_t language;
     bool_t with_accessibility;					// Closed Captions for subtitle, Audio Description for audio
+	bool_t forced;								// Forced for subtitle only
 	uint32_t bitrate[MEDIA_TYPE_COUNT];
 	uint32_t avg_bitrate[MEDIA_TYPE_COUNT];
 	int64_t first_key_frame_offset;
