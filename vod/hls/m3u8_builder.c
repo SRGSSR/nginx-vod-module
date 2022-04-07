@@ -1050,7 +1050,14 @@ m3u8_builder_ext_x_media_tags_write(
 		}
 		else
 		{
-			p = vod_copy(p, M3U8_EXT_MEDIA_NON_DEFAULT, sizeof(M3U8_EXT_MEDIA_NON_DEFAULT) - 1);
+			if (tracks[media_type]->media_info.forced)
+			{
+				p = vod_copy(p, M3U8_EXT_MEDIA_AUTOSELECT, sizeof(M3U8_EXT_MEDIA_AUTOSELECT) - 1);
+			}
+			else
+			{
+				p = vod_copy(p, M3U8_EXT_MEDIA_NON_DEFAULT, sizeof(M3U8_EXT_MEDIA_NON_DEFAULT) - 1);
+			}
 		}
 
 		if (media_type == MEDIA_TYPE_SUBTITLE)
