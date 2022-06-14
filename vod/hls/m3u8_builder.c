@@ -18,7 +18,7 @@
 #define M3U8_EXT_MEDIA_NON_DEFAULT "AUTOSELECT=NO,DEFAULT=NO,"
 #define M3U8_EXT_MEDIA_FORCED "FORCED=YES,"
 #define M3U8_EXT_MEDIA_AD "CHARACTERISTICS=\"public.accessibility.describes-video\","
-#define M3U8_EXT_MEDIA_SDH "CHARACTERISTICS=\"public.accessibility.describes-music-and-sound\","
+#define M3U8_EXT_MEDIA_SDH "CHARACTERISTICS=\"public.accessibility.describes-spoken-dialog,public.accessibility.describes-music-and-sound\","
 #define M3U8_EXT_MEDIA_URI "URI=\""
 #define M3U8_EXT_MEDIA_INSTREAM_ID "INSTREAM-ID=\"%V\""
 
