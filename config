@@ -213,7 +213,7 @@ ngx_feature_incs="#include <libavfilter/avfilter.h>
                   #include <libavfilter/buffersink.h>"
 ngx_feature_path=
 ngx_feature_libs="$LIB_AV_FILTER"
-ngx_feature_test="avfilter_register_all()"
+ngx_feature_test="avfilter_get_by_name(NULL)"
 . auto/feature
 
 if [ $ngx_found = yes ]; then
@@ -399,6 +399,7 @@ VOD_SRCS="$VOD_SRCS                                           \
           $ngx_addon_dir/vod/language_code.c                  \
           $ngx_addon_dir/vod/manifest_utils.c                 \
           $ngx_addon_dir/vod/media_format.c                   \
+          $ngx_addon_dir/vod/media_set.c                      \
           $ngx_addon_dir/vod/media_set_parser.c               \
           $ngx_addon_dir/vod/mkv/ebml.c                       \
           $ngx_addon_dir/vod/mkv/mkv_builder.c                \

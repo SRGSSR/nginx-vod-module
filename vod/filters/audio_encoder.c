@@ -3,7 +3,6 @@
 
 // constants
 #define AUDIO_ENCODER_BITS_PER_SAMPLE (16)
-#define AAC_ENCODER_NAME ("libfdk_aac")
 
 // typedefs
 typedef struct
@@ -16,6 +15,13 @@ typedef struct
 // globals
 static const AVCodec *encoder_codec = NULL;
 static bool_t initialized = FALSE;
+
+static char* aac_encoder_names[] = {
+	"libfdk_aac",
+	"aac",
+	NULL
+};
+
 
 static bool_t
 audio_encoder_is_format_supported(const AVCodec *codec, enum AVSampleFormat sample_fmt)
@@ -36,16 +42,28 @@ audio_encoder_is_format_supported(const AVCodec *codec, enum AVSampleFormat samp
 void
 audio_encoder_process_init(vod_log_t* log)
 {
+	char** name;
+
 	#if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(58, 18, 100)
 		avcodec_register_all();
 	#endif
 
-	encoder_codec = avcodec_find_encoder_by_name(AAC_ENCODER_NAME);
-	if (encoder_codec == NULL)
+	for (name = aac_encoder_names; ; name++)
 	{
-		vod_log_error(VOD_LOG_WARN, log, 0,
-			"audio_encoder_process_init: failed to get AAC encoder, audio encoding is disabled. recompile libavcodec with libfdk_aac to enable it");
-		return;
+		if (*name == NULL)
+		{
+			vod_log_error(VOD_LOG_WARN, log, 0,
+				"audio_encoder_process_init: failed to get AAC encoder, audio encoding is disabled. recompile libavcodec with an aac encoder to enable it");
+			return;
+		}
+
+		encoder_codec = avcodec_find_encoder_by_name(*name);
+		if (encoder_codec != NULL)
+		{
+			vod_log_error(VOD_LOG_INFO, log, 0,
+				"audio_encoder_process_init: using aac encoder \"%s\"", *name);
+			break;
+		}
 	}
 
 	if (!audio_encoder_is_format_supported(encoder_codec, AUDIO_ENCODER_INPUT_SAMPLE_FORMAT))
@@ -99,8 +117,14 @@ audio_encoder_init(
 	encoder->time_base.num = 1;
 	encoder->time_base.den = params->timescale;
 	encoder->sample_rate = params->sample_rate;
+
+#if LIBAVUTIL_VERSION_INT >= AV_VERSION_INT(57, 23, 100)
+	av_channel_layout_from_mask(&encoder->ch_layout, params->channel_layout);
+#else
 	encoder->channels = params->channels;
 	encoder->channel_layout = params->channel_layout;
+#endif
+
 	encoder->bit_rate = params->bitrate;
 	encoder->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;		// make the codec generate the extra data
 
@@ -306,8 +330,15 @@ audio_encoder_update_media_info(
 	media_info->bitrate = encoder->bit_rate;
 
 	media_info->u.audio.object_type_id = 0x40;		// ffmpeg always writes 0x40 (ff_mp4_obj_type)
+
+#if LIBAVUTIL_VERSION_INT >= AV_VERSION_INT(57, 23, 100)
+	media_info->u.audio.channels = encoder->ch_layout.nb_channels;
+	media_info->u.audio.channel_layout = encoder->ch_layout.u.mask;
+#else
 	media_info->u.audio.channels = encoder->channels;
 	media_info->u.audio.channel_layout = encoder->channel_layout;
+#endif
+
 	media_info->u.audio.bits_per_sample = AUDIO_ENCODER_BITS_PER_SAMPLE;
 	media_info->u.audio.packet_size = 0;			// ffmpeg always writes 0 (mov_write_audio_tag)
 	media_info->u.audio.sample_rate = encoder->sample_rate;

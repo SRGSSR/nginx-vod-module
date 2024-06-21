@@ -201,12 +201,18 @@ typedef struct {
 } raw_atom_t;
 
 typedef struct {
+	uint8_t profile;
+	uint8_t level;
+} dovi_video_media_info_t;
+
+typedef struct {
 	uint16_t width;
 	uint16_t height;
 	uint32_t nal_packet_size_length;
 	uint32_t initial_pts_delay;
 	uint32_t key_frame_bitrate;
 	uint8_t transfer_characteristics;
+	dovi_video_media_info_t dovi;
 } video_media_info_t;
 
 typedef struct {
@@ -218,6 +224,13 @@ typedef struct {
 	uint32_t sample_rate;
 	mp4a_config_t codec_config;
 } audio_media_info_t;
+
+typedef struct {
+	language_id_t language;
+	vod_str_t lang_str;
+	vod_str_t label;
+	bool_t is_default;
+} media_tags_t;
 
 typedef struct media_info_s {
 	uint32_t media_type;
@@ -237,9 +250,7 @@ typedef struct media_info_s {
 	int64_t empty_duration;		// temporary during parsing
 	int64_t start_time;			// temporary during parsing
 	uint64_t codec_delay;
-	language_id_t language;
-	vod_str_t lang_str;
-	vod_str_t label;
+	media_tags_t tags;
 	union {
 		video_media_info_t video;
 		audio_media_info_t audio;

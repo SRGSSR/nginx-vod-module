@@ -1,5 +1,6 @@
 #include "m3u8_builder.h"
 #include "../manifest_utils.h"
+#include "../mp4/mp4_defs.h"
 
 #if (NGX_HAVE_OPENSSL_EVP)
 #include "../dash/edash_packager.h"
@@ -799,17 +800,20 @@ m3u8_builder_append_index_url(
 	{
 		// absolute url only
 		p = vod_copy(p, base_url->data, base_url->len);
-		if (main_track->file_info.uri.len != 0 &&
-			(sub_track == NULL || vod_str_equals(main_track->file_info.uri, sub_track->file_info.uri)))
+		if (p[-1] != '/')
 		{
-			p = vod_copy(p, main_track->file_info.uri.data, main_track->file_info.uri.len);
-			write_sequence_index = FALSE;		// no need to pass the sequence index since we have a direct uri
+			if (main_track->file_info.uri.len != 0 &&
+				(sub_track == NULL || vod_str_equals(main_track->file_info.uri, sub_track->file_info.uri)))
+			{
+				p = vod_copy(p, main_track->file_info.uri.data, main_track->file_info.uri.len);
+				write_sequence_index = FALSE;		// no need to pass the sequence index since we have a direct uri
+			}
+			else
+			{
+				p = vod_copy(p, media_set->uri.data, media_set->uri.len);
+			}
+			*p++ = '/';
 		}
-		else
-		{
-			p = vod_copy(p, media_set->uri.data, media_set->uri.len);
-		}
-		*p++ = '/';
 	}
 
 	p = vod_copy(p, prefix->data, prefix->len);
@@ -851,6 +855,7 @@ m3u8_builder_closed_captions_write(
 {
 	media_closed_captions_t* closed_captions;
 	uint32_t index = 0;
+	bool_t is_default;
 
 	for (closed_captions = media_set->closed_captions; closed_captions < media_set->closed_captions_end; closed_captions++)
 	{
@@ -865,7 +870,13 @@ m3u8_builder_closed_captions_write(
 			p = vod_sprintf(p, M3U8_EXT_MEDIA_LANG, &closed_captions->language);
 		}
 
-		if (closed_captions == media_set->closed_captions)
+		is_default = closed_captions->is_default;
+		if (is_default < 0)
+		{
+			is_default = closed_captions == media_set->closed_captions;
+		}
+
+		if (is_default)
 		{
 			p = vod_copy(p, M3U8_EXT_MEDIA_DEFAULT, sizeof(M3U8_EXT_MEDIA_DEFAULT) - 1);
 		}
@@ -917,8 +928,8 @@ m3u8_builder_ext_x_media_tags_get_size(
 	{
 		cur_track = adaptation_set->first[0];
 
-		label_len = cur_track->media_info.label.len;
-		result += vod_max(label_len, default_label.len) + cur_track->media_info.lang_str.len;
+		label_len = cur_track->media_info.tags.label.len;
+		result += vod_max(label_len, default_label.len) + cur_track->media_info.tags.lang_str.len;
 
 		if (base_url->len != 0)
 		{
@@ -944,6 +955,7 @@ m3u8_builder_ext_x_media_tags_write(
 	media_track_t* tracks[MEDIA_TYPE_COUNT];
 	vod_str_t* label;
 	uint32_t group_index;
+	bool_t is_default;
 	char* group_id;
 	char* type;
 
@@ -984,9 +996,8 @@ m3u8_builder_ext_x_media_tags_write(
 			group_index = 0;
 		}
 
-		label = &tracks[media_type]->media_info.label;
-		if (label->len == 0 ||
-			(media_type == MEDIA_TYPE_AUDIO && !adaptation_sets->multi_audio))
+		label = &tracks[media_type]->media_info.tags.label;
+		if (label->len == 0)
 		{
 			label = &default_label;
 		}
@@ -997,13 +1008,19 @@ m3u8_builder_ext_x_media_tags_write(
 			group_index,
 			label);
 
-		if (tracks[media_type]->media_info.lang_str.len > 0 && (media_type != MEDIA_TYPE_AUDIO || adaptation_sets->multi_audio))
+		if (tracks[media_type]->media_info.tags.lang_str.len > 0)
 		{
 			p = vod_sprintf(p, M3U8_EXT_MEDIA_LANG,
-				&tracks[media_type]->media_info.lang_str);
+				&tracks[media_type]->media_info.tags.lang_str);
 		}
 
-		if (adaptation_set == first_adaptation_set)
+		is_default = tracks[media_type]->media_info.tags.is_default;
+		if (is_default < 0)
+		{
+			is_default = adaptation_set == first_adaptation_set;
+		}
+
+		if (is_default)
 		{
 			p = vod_copy(p, M3U8_EXT_MEDIA_DEFAULT, sizeof(M3U8_EXT_MEDIA_DEFAULT) - 1);
 		}
@@ -1037,9 +1054,15 @@ m3u8_builder_ext_x_media_tags_write(
 }
 
 static u_char*
-m3u8_builder_write_video_range(u_char* p, uint8_t transfer_characteristics)
+m3u8_builder_write_video_range(u_char* p, media_info_t* media_info)
 {
-	switch (transfer_characteristics)
+	if (media_info->format == FORMAT_DVH1)
+	{
+		p = vod_copy(p, M3U8_VIDEO_RANGE_PQ, sizeof(M3U8_VIDEO_RANGE_PQ) - 1);
+		return p;
+	}
+
+	switch (media_info->u.video.transfer_characteristics)
 	{
 	case 1:
 		p = vod_copy(p, M3U8_VIDEO_RANGE_SDR, sizeof(M3U8_VIDEO_RANGE_SDR) - 1);
@@ -1155,7 +1178,7 @@ m3u8_builder_write_variants(
 
 		if (tracks[MEDIA_TYPE_VIDEO] != NULL)
 		{
-			p = m3u8_builder_write_video_range(p, video->u.video.transfer_characteristics);
+			p = m3u8_builder_write_video_range(p, video);
 		}
 
 		if (adaptation_sets->count[ADAPTATION_TYPE_AUDIO] > 0 && adaptation_sets->total_count > 1)
@@ -1230,7 +1253,7 @@ m3u8_builder_write_iframe_variants(
 
 		video = &tracks[MEDIA_TYPE_VIDEO]->media_info;
 		if (conf->container_format == HLS_CONTAINER_AUTO && 
-			video->codec_id == VOD_CODEC_ID_HEVC)
+			video->codec_id != VOD_CODEC_ID_AVC)
 		{
 			continue;
 		}
@@ -1257,7 +1280,7 @@ m3u8_builder_write_iframe_variants(
 			base_url);
 		*p++ = '\"';
 
-		p = m3u8_builder_write_video_range(p, video->u.video.transfer_characteristics);
+		p = m3u8_builder_write_video_range(p, video);
 
 		*p++ = '\n';
 	}
