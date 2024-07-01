@@ -1,0 +1,171 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="NONE" />
+  </component>
+  <component name="CMakeSettings">
+    <configurations>
+      <configuration PROFILE_NAME="Debug" ENABLED="true" CONFIG_NAME="Debug" />
+    </configurations>
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="c70fbb9a-f025-4d90-8e0a-f5a3f5e7e05e" name="Changes" comment="feat: propagate upstream http code and log upstream URI in case of error" />
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="ClangdSettings">
+    <option name="formatViaClangd" value="false" />
+  </component>
+  <component name="Git.Settings">
+    <option name="PUSH_TAGS">
+      <GitPushTagMode>
+        <option name="argument" value="--tags" />
+        <option name="title" value="All" />
+      </GitPushTagMode>
+    </option>
+    <option name="RECENT_BRANCH_BY_REPOSITORY">
+      <map>
+        <entry key="$PROJECT_DIR$" value="feature/log_upstream_error" />
+      </map>
+    </option>
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="HighlightingSettingsPerFile">
+    <setting file="file://$PROJECT_DIR$/README.md" root0="FORCE_HIGHLIGHTING" root1="FORCE_HIGHLIGHTING" />
+  </component>
+  <component name="MarkdownSettingsMigration">
+    <option name="stateVersion" value="1" />
+  </component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 4
+}</component>
+  <component name="ProjectId" id="2KRP2lKWELWRiQ5SGnIhJtbU0Yn" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;RunOnceActivity.cidr.known.project.marker&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.readMode.enableVisualFormatting&quot;: &quot;true&quot;,
+    &quot;WebServerToolWindowFactoryState&quot;: &quot;false&quot;,
+    &quot;cf.first.check.clang-format&quot;: &quot;false&quot;,
+    &quot;cidr.known.project.marker&quot;: &quot;true&quot;,
+    &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
+  }
+}</component>
+  <component name="RunManager">
+    <configuration default="true" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" PASS_PARENT_ENVS_2="true">
+      <method v="2">
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+      </method>
+    </configuration>
+  </component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="c70fbb9a-f025-4d90-8e0a-f5a3f5e7e05e" name="Changes" comment="" />
+      <created>1673934216958</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1673934216958</updated>
+      <workItem from="1673934219734" duration="30977000" />
+      <workItem from="1675064532575" duration="178000" />
+      <workItem from="1683033904704" duration="1120000" />
+      <workItem from="1683042722339" duration="462000" />
+      <workItem from="1683528853001" duration="4743000" />
+      <workItem from="1686546685721" duration="3093000" />
+      <workItem from="1687439808699" duration="3834000" />
+      <workItem from="1691141870466" duration="787000" />
+      <workItem from="1691142935985" duration="598000" />
+      <workItem from="1691396762140" duration="599000" />
+      <workItem from="1691414792353" duration="3628000" />
+      <workItem from="1698385385373" duration="16000" />
+      <workItem from="1698386278919" duration="2290000" />
+      <workItem from="1698397803203" duration="5000" />
+      <workItem from="1702891629720" duration="7000" />
+      <workItem from="1707995550792" duration="8647000" />
+      <workItem from="1711629711790" duration="2778000" />
+    </task>
+    <task id="LOCAL-00001" summary="fix: build">
+      <created>1674197548714</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1674197548714</updated>
+    </task>
+    <task id="LOCAL-00002" summary="feat: adjust vtt timestamps to be clipped to the segment">
+      <created>1674228769643</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1674228769643</updated>
+    </task>
+    <task id="LOCAL-00003" summary="feat: do not output cues that started before the segment">
+      <created>1674230452649</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1674230452649</updated>
+    </task>
+    <task id="LOCAL-00004" summary="style: fix tabs">
+      <created>1674458176570</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1674458176570</updated>
+    </task>
+    <task id="LOCAL-00005" summary="feat: propagate upstream http code and log upstream URI in case of error">
+      <option name="closed" value="true" />
+      <created>1719832488260</created>
+      <option name="number" value="00005" />
+      <option name="presentableId" value="LOCAL-00005" />
+      <option name="project" value="LOCAL" />
+      <updated>1719832488260</updated>
+    </task>
+    <option name="localTasksCounter" value="6" />
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State>
+              <option name="FILTERS">
+                <map>
+                  <entry key="branch">
+                    <value>
+                      <list>
+                        <option value="master" />
+                      </list>
+                    </value>
+                  </entry>
+                </map>
+              </option>
+            </State>
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="fix: build" />
+    <MESSAGE value="feat: adjust vtt timestamps to be clipped to the segment" />
+    <MESSAGE value="feat: do not output cues that started before the segment" />
+    <MESSAGE value="style: fix tabs" />
+    <MESSAGE value="feat: propagate upstream http code and log upstream URI in case of error" />
+    <option name="LAST_COMMIT_MESSAGE" value="feat: propagate upstream http code and log upstream URI in case of error" />
+  </component>
+</project>
