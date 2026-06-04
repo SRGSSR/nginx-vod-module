@@ -18,6 +18,7 @@
 #define M3U8_EXT_MEDIA_DEFAULT "AUTOSELECT=YES,DEFAULT=YES,"
 #define M3U8_EXT_MEDIA_AUTOSELECT "AUTOSELECT=YES,DEFAULT=NO,"
 #define M3U8_EXT_MEDIA_NON_DEFAULT "AUTOSELECT=NO,DEFAULT=NO,"
+#define M3U8_EXT_MEDIA_FORCED "FORCED=YES,"
 #define M3U8_EXT_MEDIA_AD "CHARACTERISTICS=\"public.accessibility.describes-video\","
 #define M3U8_EXT_MEDIA_SDH "CHARACTERISTICS=\"public.accessibility.describes-spoken-dialog,public.accessibility.describes-music-and-sound\","
 #define M3U8_EXT_MEDIA_URI "URI=\""
@@ -946,6 +947,11 @@ m3u8_builder_ext_x_media_tags_get_size(
 			}
 		}
 
+		if (media_type == MEDIA_TYPE_SUBTITLE && cur_track->media_info.tags.forced)
+		{
+			result += sizeof(M3U8_EXT_MEDIA_FORCED) - 1;
+		}
+
 		if (base_url->len != 0)
 		{
 			result += vod_max(cur_track->file_info.uri.len, media_set->uri.len);
@@ -1037,7 +1043,7 @@ m3u8_builder_ext_x_media_tags_write(
 
 		if (tracks[media_type]->media_info.tags.with_accessibility)
 		{
-			if (adaptation_set == first_adaptation_set)
+			if (is_default)
 			{
 				p = vod_copy(p, M3U8_EXT_MEDIA_DEFAULT, sizeof(M3U8_EXT_MEDIA_DEFAULT) - 1);
 			}
@@ -1064,9 +1070,14 @@ m3u8_builder_ext_x_media_tags_write(
 			p = vod_copy(p, M3U8_EXT_MEDIA_NON_DEFAULT, sizeof(M3U8_EXT_MEDIA_NON_DEFAULT) - 1);
 		}
 
+		if (media_type == MEDIA_TYPE_SUBTITLE && tracks[media_type]->media_info.tags.forced)
+		{
+			p = vod_copy(p, M3U8_EXT_MEDIA_FORCED, sizeof(M3U8_EXT_MEDIA_FORCED) - 1);
+		}
+
 		if (media_type == MEDIA_TYPE_AUDIO)
 		{
-			p = vod_sprintf(p, M3U8_EXT_MEDIA_CHANNELS, 
+			p = vod_sprintf(p, M3U8_EXT_MEDIA_CHANNELS,
 				(uint32_t)tracks[media_type]->media_info.u.audio.channels);
 		}
 
