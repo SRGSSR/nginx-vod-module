@@ -230,6 +230,7 @@ typedef struct {
 	vod_str_t lang_str;
 	vod_str_t label;
 	bool_t is_default;
+	bool_t with_accessibility;					// Closed Captions for subtitle, Audio Description for audio
 } media_tags_t;
 
 typedef struct media_info_s {

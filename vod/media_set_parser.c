@@ -138,6 +138,7 @@ static json_object_value_def_t media_sequence_params[] = {
 	{ vod_string("language"),		VOD_JSON_STRING,	offsetof(media_sequence_t, tags.lang_str), media_set_parse_null_term_string },
 	{ vod_string("label"),			VOD_JSON_STRING,	offsetof(media_sequence_t, tags.label), media_set_parse_null_term_string },
 	{ vod_string("default"),		VOD_JSON_BOOL,		offsetof(media_sequence_t, tags.is_default), media_set_parse_bool },
+	{ vod_string("withAccessibility"),VOD_JSON_BOOL,	offsetof(media_sequence_t, tags.with_accessibility), media_set_parse_bool },
 	{ vod_string("bitrate"),		VOD_JSON_OBJECT,	offsetof(media_sequence_t, bitrate), media_set_parse_bitrate },
 	{ vod_string("avg_bitrate"),	VOD_JSON_OBJECT,	offsetof(media_sequence_t, avg_bitrate), media_set_parse_bitrate },
 	{ vod_null_string, 0, 0, NULL }
@@ -979,6 +980,7 @@ media_set_parse_sequences(
 		cur_output->tags.language = 0;
 		cur_output->tags.label.len = 0;
 		cur_output->tags.is_default = -1;
+		cur_output->tags.with_accessibility = FALSE;
 		cur_output->first_key_frame_offset = 0;
 		cur_output->key_frame_durations = NULL;
 		cur_output->drm_info = NULL;
