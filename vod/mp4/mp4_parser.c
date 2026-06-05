@@ -2868,6 +2868,8 @@ mp4_parser_process_moov_atom_callback(void* ctx, atom_info_t* atom_info)
 
 	// inherit the sequence language and label
 	sequence = context->parse_params.source->sequence;
+	metadata_parse_context.media_info.tags.with_accessibility = sequence->tags.with_accessibility;
+	metadata_parse_context.media_info.tags.forced = sequence->tags.forced;
 	if (sequence->tags.label.len != 0)
 	{
 		metadata_parse_context.media_info.tags.label = sequence->tags.label;
