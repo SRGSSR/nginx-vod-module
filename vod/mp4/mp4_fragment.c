@@ -107,7 +107,7 @@ mp4_fragment_write_video_trun_atom(
 	{
 		if (version == 1)
 		{
-			initial_pts_delay = cur_clip->first_track->media_info.u.video.initial_pts_delay;
+			initial_pts_delay = cur_clip->first_track->frames.first_frame[0].pts_delay;
 		}
 
 		part = &cur_clip->first_track->frames;
