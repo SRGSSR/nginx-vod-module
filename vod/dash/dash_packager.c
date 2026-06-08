@@ -1669,7 +1669,7 @@ dash_packager_get_earliest_pres_time(media_set_t* media_set, media_track_t* trac
 #ifndef DISABLE_PTS_DELAY_COMPENSATION
 		if (track->media_info.media_type == MEDIA_TYPE_VIDEO)
 		{
-			result -= track->media_info.u.video.initial_pts_delay;
+			result -= track->frames.first_frame[0].pts_delay;
 		}
 #endif
 	}
