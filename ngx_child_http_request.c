@@ -89,6 +89,44 @@ static ngx_http_output_header_filter_pt ngx_http_next_header_filter;
 static ngx_hash_t hide_headers_hash;
 
 static void
+ngx_child_request_log_upstream_status(
+	ngx_http_request_t *r,
+	ngx_http_request_t *sr,
+	ngx_http_upstream_t *u)
+{
+	u_char port_buf[sizeof(":65535") - 1];
+	ngx_str_t host = ngx_null_string;
+	ngx_str_t port = ngx_null_string;
+	in_port_t port_num = 0;
+	in_port_t default_port;
+
+	// Note: ngx_str_t values are not null terminated, must be logged with %V
+	if (u->resolved != NULL && u->resolved->host.len != 0)
+	{
+		// proxy_pass with variables, the host is evaluated per request
+		host = u->resolved->host;
+		port_num = u->resolved->port;
+	}
+	else if (u->upstream != NULL)
+	{
+		host = u->upstream->host;
+		port_num = u->upstream->port;
+	}
+
+	default_port = u->schema.len == sizeof("https://") - 1 &&
+		ngx_strncmp(u->schema.data, "https://", u->schema.len) == 0 ? 443 : 80;
+	if (port_num != 0 && port_num != default_port)
+	{
+		port.data = port_buf;
+		port.len = ngx_sprintf(port_buf, ":%ui", (ngx_uint_t)port_num) - port_buf;
+	}
+
+	ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
+		"ngx_child_request_wev_handler: status: %ui, subrequest: %V, resolved: %V%V%V%V",
+		u->headers_in.status_n, &sr->uri, &u->schema, &host, &port, &u->uri);
+}
+
+static void
 ngx_child_request_wev_handler(ngx_http_request_t *r)
 {
 	ngx_child_request_context_t* ctx;
@@ -192,18 +230,14 @@ ngx_child_request_wev_handler(ngx_http_request_t *r)
 		case NGX_HTTP_NOT_FOUND:
 		case NGX_HTTP_FORBIDDEN:
 		case NGX_HTTP_GONE:
-			ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
-			"ngx_child_request_wev_handler: upstream: %s, uri: %s, status: %ui",
-				u->schema.data, sr->uri.data, u->headers_in.status_n);
+			ngx_child_request_log_upstream_status(r, sr, u);
 			rc = u->headers_in.status_n;
 			break;
 
 		default:
 			if (u->headers_in.status_n != 0)
 			{
-				ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
-			  	"ngx_child_request_wev_handler: upstream: %s, uri: %s, status: %ui",
-					u->schema.data, sr->uri.data, u->headers_in.status_n);
+				ngx_child_request_log_upstream_status(r, sr, u);
 			}
 			else
 			{
