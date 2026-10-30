@@ -105,7 +105,7 @@ mp4_fragment_write_video_trun_atom(
 
 	for (cur_clip = sequence->filtered_clips; cur_clip < sequence->filtered_clips_end; cur_clip++)
 	{
-		if (version == 1)
+		if (version == 1 && cur_clip->first_track->frame_count > 0)
 		{
 			initial_pts_delay = cur_clip->first_track->frames.first_frame[0].pts_delay;
 		}
