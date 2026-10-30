@@ -127,6 +127,7 @@ subtitle_parse(
 
 	track = vod_array_push(&metadata->base.tracks);		// can't fail
 	vod_memzero(track, sizeof(*track));
+	track->frames.clip_to = UINT_MAX;		// timestamps are already clipped by the subtitle parsers
 	track->media_info.media_type = MEDIA_TYPE_SUBTITLE;
 	track->media_info.codec_id = VOD_CODEC_ID_WEBVTT;
 	track->media_info.timescale = 1000;
